@@ -49,7 +49,7 @@ A multi-user web platform for running, scheduling, and reporting on network devi
 ### Remote Config Pull (SCP/SFTP)
 - **Scheduled pull** — Pull a members folder from a remote server on a schedule via SFTP (paramiko), with SSH-key, password, or PuTTY `.ppk` key auth
 - **Auto-registration** — Newly discovered member folders on the remote server are automatically added as dashboard members
-- **Safe by design** — Additive-only sync (never deletes local files), skip-unchanged-file optimization, path-traversal protection, and host-key pinning (TOFU)
+- **Safe by design** — Additive-only sync (never deletes local files), skip-unchanged-file optimization, path-traversal protection, and host-key pinning (TOFU); a remote file is also skipped outright if its name matches a device that's separately configured for SSH pull, so the two mechanisms can never overwrite each other's capture of the same device — freed up again automatically the moment that device's SSH pull is disabled or removed
 - **Live progress bar** — Manual "Pull Now" shows real-time file-by-file progress
 
 ### SNMP & SSH Device Polling
@@ -70,6 +70,7 @@ A multi-user web platform for running, scheduling, and reporting on network devi
 - **More reliable SSH config pulls** — Detects the device's actual CLI prompt to confirm a command has genuinely finished (instead of only inferring it from a quiet gap on the wire), and recovers automatically when a command's terminating keystroke doesn't register on the device's end, instead of misreading it as a rejected command; that recovery path is also fully scrubbed of SSH-session noise before being stored, so it can't trigger a false "config changed" alert
 - **Begin Full SSH Pull Now** — Settings button that pulls every device with SSH credentials configured, across every member, right now — independent of each device's own schedule or auto-pull toggle — with a live progress bar and time estimate
 - **12-hour SSH pull interval** — In addition to daily/weekly/monthly cadences, the global SSH Config Pull schedule can run every 12 hours
+- **License info pull** — A fully separate SSH session and command batch from the config pull, pulling license status (e.g. Cisco Smart Licensing summary, Juniper's license inventory, an ASA's licensed-features block) from every device with SSH credentials configured. Best-effort per-platform parsing extracts an expiration date, "Perpetual", or an evaluation-period countdown where the platform reports one, shown as a License Expiration column on the Devices tab (raw captured text available on hover for anything the parser doesn't recognize). Runs on its own "Pull License Info Now" button and its own optional schedule in Settings, mirroring the SSH Config Pull Schedule's interval/start-hour controls — never mixed into the same session as the config pull, so one can't affect the other's reliability
 
 ### In-Browser SSH Terminal
 - **Live shell, no client needed** — Open a real interactive SSH session to any device straight from its page in the browser (xterm.js over a WebSocket) — no PuTTY or terminal app required
@@ -98,6 +99,7 @@ A multi-user web platform for running, scheduling, and reporting on network devi
 - **Scheduling** — Recurring unattended pushes on the same interval vocabulary as audits/polling, with the same parallelism control and an optional completion-summary email so a bad unattended run doesn't go unnoticed
 - **Scoped permissions** — Admins always have access; a dedicated "Can push config changes" permission lets a non-admin operator run or schedule pushes limited to their assigned members, while global (all-members) scope stays admin-only
 - **Telnet support** — Same as config pulling and the SSH terminal: the push runs over Telnet instead of SSH when the device's credential has "Connect via Telnet" enabled
+- **Scripts are per-member, not global** — Each script is assigned to exactly one member; a non-admin only ever sees, edits, previews, or runs scripts assigned to a member they have access to, never another member's, and never an unassigned one (admins can leave a script unassigned to keep it an admin-only internal tool). Enforced on every route that loads a script by id, not just the library list, so a tenant can't reach a script outside their access even by guessing its id
 
 ### CVE Vulnerability Reporting
 - **NVD lookups** — Cross-references each polled device's SNMP-detected platform/version against the National Vulnerability Database, covering Cisco IOS/IOS-XE/NX-OS, Juniper JunOS, and Arista EOS
@@ -138,7 +140,7 @@ A multi-user web platform for running, scheduling, and reporting on network devi
 - **Login rate limiting** — 4 failed attempts (password or 2FA code) locks the username and source IP for 5 minutes, with a live "N attempts remaining" warning on each failure
 - **Hardened session cookies** — `Secure` (TLS-aware), `HttpOnly`, `SameSite=Lax`
 - **Security response headers** — Content-Security-Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, and HSTS when served over TLS
-- **SSH host-key pinning** — The in-browser terminal, config puller, and Automation config-push engine all pin each device's host key on first connect (trust-on-first-use) and reject a connection if it ever changes, instead of silently trusting it
+- **SSH host-key pinning** — The in-browser terminal, config puller, and Automation config-push engine all pin each device's host key on first connect (trust-on-first-use) and reject a connection if it ever changes, instead of silently trusting it — safely even when multiple connections share the same known-hosts file at once (Poll All Devices, a parallel Automation push), so one device's newly-pinned key can never be silently overwritten by another's
 - **No phone-home** — The app never contacts anything outside your network on its own. The only outbound call it ever makes is an optional, explicitly user-triggered CVE lookup against NIST's public NVD database (device platform/version only — no hostnames, IPs, or credentials are ever sent)
 - **Runs without root** — `install.sh` never requires the service itself to run as root (see Installation below)
 
