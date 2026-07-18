@@ -148,6 +148,7 @@ All screenshots below use a synthetic demo member ("Example Networks") with plac
 - **Email alerts** — Score-drop notifications with a global default email and per-member override; alerts fire immediately when a threshold is saved and the score already breaches it
 - **Dashboard health reports** — Full network summary sorted best → worst score, on a schedule
 - **Multi-tenant user management** — Assign specific members to non-admin users; each user gets their own independent alert emails and report schedules, separate from the admin's global settings
+- **Per-tenant view permissions** — Four independent toggles on a non-admin user's Edit page control whether they can see audits (score, report, Audit History, IPAM), change history, devices, or config files for their assigned members — each defaults on, so assigning a member doesn't require separately re-granting visibility into everything about it. Enforced on every route that serves that data, not just hidden in the UI
 - **Reviewing Engineer** — Any admin account can be flagged as a reviewing engineer (Users → Edit) to appear in the picker shown when running/re-running an audit, shown by their display name if one is set rather than their login username
 - **Per-member audit check controls** — Disable specific checks; score adjusts instantly, no re-audit needed
 
